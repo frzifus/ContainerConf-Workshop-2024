@@ -3,7 +3,7 @@
 __Abstract__: Dieser Workshop behandelt Observability mit OpenTelemetry. Im Vordergrund steht dabei das Distributed Tracing, mit dem man Probleme in (stark) verteilten Anwendungen erkennen und behandeln kann.
 
 Zu Beginn des Workshops werden die Grundlagen und zugrundeliegenden Konzepte erklärt. 
-Im zweiten Teil betrachhten wir uns die Instrumentierung von Software an Beispielen von Java/Quarkus und Python an. 
+Im zweiten Teil betrachten wir uns die Instrumentierung von Software an Beispielen von Java/Quarkus und Python an. 
 Der dritte Teil behandelt das Deployment in Kubernetes/OpenShift-Clustern sowie wie der Collector effizent eingesetzt werden kann.
 Zuletzt widmen wir uns Themen wie Sampling und Filtering, um die Menge an anfallenden Daten in den Griff zu bekommen.
 
