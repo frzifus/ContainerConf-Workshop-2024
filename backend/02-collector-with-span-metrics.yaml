@@ -1,0 +1,57 @@
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: observability-backend
+spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.103.0
+  mode: deployment
+  replicas: 1
+  ports:
+    - port: 8888
+      protocol: TCP
+      name: metrics
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch: {}
+
+    connectors:
+      spanmetrics: {}
+
+    exporters:
+      otlp/traces:
+        endpoint: jaeger-collector:4317
+        tls:
+          insecure: true
+
+      otlphttp/metrics:
+        endpoint: http://prometheus:80/api/v1/otlp/
+        tls:
+          insecure: true
+
+      debug:
+        verbosity: detailed
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp/traces, spanmetrics]
+        metrics:
+          receivers: [spanmetrics, otlp]
+          processors: [batch]
+          exporters: [otlphttp/metrics, debug]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [debug]

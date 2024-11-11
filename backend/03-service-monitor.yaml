@@ -1,0 +1,18 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector-servicemonitor
+  namespace: observability-backend
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: opentelemetry-collector
+      app.kubernetes.io/instance: observability-backend.otel
+      app.kubernetes.io/name: otel-collector-monitoring
+  endpoints:
+    - port: monitoring
+      targetPort: 8888
+      interval: 10s
+      path: /metrics
+      scheme: http

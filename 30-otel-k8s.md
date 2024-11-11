@@ -189,6 +189,11 @@ Konfiguration des Span Metric Connectors:
           exporters: [otlphttp/metrics]
 ```
 
+Rollout:
+```bash
+kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/backend/02-collector-with-span-metrics.yaml
+```
+
 In den Collector Logs sollten wir nun sehen, wie die Metriken aus unseren Traces generiert werden.
 ```
 ...
@@ -236,6 +241,80 @@ kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheu
 kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
 ```
 
+Beispiel eines Service-Monitors zur erhebung interner Metriken unseres zuvor ausgerollten OpenTelemetry Collectors:
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector-servicemonitor
+  namespace: observability-backend
+  labels:
+    app: demo
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: opentelemetry-collector
+      app.kubernetes.io/instance: observability-backend.otel
+      app.kubernetes.io/name: otel-collector-monitoring
+  endpoints:
+    - port: monitoring
+      targetPort: 8888
+      interval: 10s
+      path: /metrics
+      scheme: http
+```
 
-
+Der Target-Allocator löst ausgewählte Service- und Podmonitore in Scrape-Targets auf und verteilt diese auf einzelne Collector-Instanzen.
 ![Target-Allocator](images/otel-ta.png)
+
+Beispiel Konfiguration:
+```yaml
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: observability-backend
+spec:
+  managementState: managed
+  mode: statefulset
+  targetAllocator:
+    enabled: true
+    serviceAccount: ta # Muss manuell erzeugt werden.
+    prometheusCR:
+      enabled: true
+      serviceMonitorSelector:
+        matchLabels:
+          app: demo
+  config:
+    exporters:
+      debug: {}
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+          - job_name: 'otel-collector'
+            scrape_interval: 30s
+            static_configs:
+            - targets: [ '0.0.0.0:8888' ]
+    service:
+      telemetry:
+        metrics:
+          address: ":8888"
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          exporters: [debug]
+```
+
+Rollout:
+```bash
+kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/backend/03-service-monitor.yaml
+kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/backend/04-collector-ta.yaml
+```
+
+Output (`kubectl logs -n observability-backend otel-collector-0`):
+```bash
+2024-11-11T22:27:57.402Z	info	prometheusreceiver@v0.103.0/metrics_receiver.go:344	Starting scrape manager	{"kind": "receiver", "name": "prometheus", "data_type": "metrics"}
+2024-11-11T22:28:43.903Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "debug", "resource metrics": 1, "metrics": 11, "data points": 11}
+2024-11-11T22:29:13.908Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "debug", "resource metrics": 1, "metrics": 15, "data points": 15}
+```
