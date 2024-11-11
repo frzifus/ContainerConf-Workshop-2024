@@ -95,7 +95,12 @@ docker run --rm -it --link otel-collector ghcr.io/open-telemetry/opentelemetry-c
 Erwartete Ausgabe:
 
 ```
-TBD
+2024-11-11T12:27:26.638Z	info	LogsExporter	{"kind": "exporter", "data_type": "logs", "name": "logging", "#logs": 1}
+2024-11-11T12:27:30.248Z	info	LogsExporter	{"kind": "exporter", "data_type": "logs", "name": "logging", "#logs": 2}
+2024-11-11T12:27:34.457Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "logging", "#metrics": 2}
+2024-11-11T12:27:34.857Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "logging", "#metrics": 1}
+2024-11-11T12:27:39.468Z	info	TracesExporter	{"kind": "exporter", "data_type": "traces", "name": "logging", "#spans": 8}
+2024-11-11T12:27:41.473Z	info	TracesExporter	{"kind": "exporter", "data_type": "traces", "name": "logging", "#spans": 10}
 ```
 
 ## Datenerfassung in Kubernetes und OpenShift
