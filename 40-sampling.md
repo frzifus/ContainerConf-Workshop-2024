@@ -8,7 +8,7 @@
 
 Um die RED Metriken nicht zu verfälschen, erstellen wir eine zweite Trace Pipeline. Der Tailsampling-Prozessor kann direkt in der OpenTelemetry-Konfiguration hinzugefügt werden.
 
-```yaml
+```diff
     # 1. Sample 100% of traces with ERROR-ing spans
     processors:
       tail_sampling:
@@ -49,8 +49,28 @@ Problematisch wird es bei mehr als einer Replikation. Der Collector prüft inter
 
 Eine relativ einfache Lösung des Problems ist es, Traces nach ID oder Service Name zu sharden.
 
-Dazu kann ein weiterer Collector als Loadbalancer basierend auf diesen Keys verwendet werden.
+Dazu kann ein weiterer Collector als [Loadbalancer](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/loadbalancingexporter/README.md) basierend auf diesen Keys verwendet werden.
 
 ![Sharding 1](images/sharding-1.png)
+
+```yaml
+   exporters:
+     loadbalancing:
+       routingKey: traceID
+       protocol:
+         otlp:
+           sending_queue:
+             queue_size: 4000
+       resolver:
+         dns:
+           hostname: sampling-collector-headless
+           port: 4317
+```
+
+```yaml
+kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/backend/06-collector-lb-tailsampling.yaml
+
+```
+
 ![Sharding 2](images/sharding-2.png)
 ![Sharding 3](images/sharding-3.png)
