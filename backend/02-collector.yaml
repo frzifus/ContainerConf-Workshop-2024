@@ -24,6 +24,10 @@ spec:
     processors:
       batch: {}
 
+    # connectors:
+    #   spanmetrics:
+    #     namespace: "span.metrics"
+
     exporters:
       otlp/traces:
         endpoint: jaeger-collector:4317
@@ -31,7 +35,7 @@ spec:
           insecure: true
 
       otlphttp/metrics:
-        endpoint: http://prometheus.observability-backend.svc.cluster.local:80/api/v1/otlp/
+        endpoint: http://prometheus:80/api/v1/otlp/
         tls:
           insecure: true
 
@@ -44,7 +48,9 @@ spec:
           receivers: [otlp]
           processors: [batch]
           exporters: [otlp/traces]
+          # exporters: [otlp/traces, spanmetrics]
         metrics:
+          # receivers: [spanmetrics, otlp]
           receivers: [otlp]
           processors: [batch]
           exporters: [otlphttp/metrics]
