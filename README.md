@@ -26,6 +26,6 @@ Jeder Schritt des Tutorials befindet sich in einer eigenen Datei:
 1. [Einrichtung der Lernumgebung](00-prerequisites.md)
 1. [Überblick Observability & Einführung in Distributed Tracing]()
 1. [Praktische Instrumentalisierung von (Quarkus)Java- und Python-Anwendungen]()
-1. [Datenerfassung mit OpenTelemetry in der Kubernetes/OpenShift Umgebung]()
-1. [Sampling und Filtering: Optimierung der Observability in verteilten Systemen]()
+1. [Datenerfassung mit OpenTelemetry in der Kubernetes/OpenShift Umgebung](30-otel-k8s.md)
+1. [Sampling und Filtering: Optimierung der Observability in verteilten Systemen](40-sampling.md)
 1. [Teilnehmer Projekt]()
