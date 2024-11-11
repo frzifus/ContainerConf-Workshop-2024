@@ -272,7 +272,7 @@ Beispiel Konfiguration:
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  name: otel
+  name: otel-ta
   namespace: observability-backend
 spec:
   managementState: managed
@@ -312,7 +312,7 @@ kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Worksho
 kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/backend/04-collector-ta.yaml
 ```
 
-Output (`kubectl logs -n observability-backend otel-collector-0`):
+Output (`kubectl logs -n observability-backend otel-ta-collector-0`):
 ```bash
 2024-11-11T22:27:57.402Z	info	prometheusreceiver@v0.103.0/metrics_receiver.go:344	Starting scrape manager	{"kind": "receiver", "name": "prometheus", "data_type": "metrics"}
 2024-11-11T22:28:43.903Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "debug", "resource metrics": 1, "metrics": 11, "data points": 11}

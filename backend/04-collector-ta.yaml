@@ -46,7 +46,7 @@ subjects:
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  name: otel
+  name: otel-ta
   namespace: observability-backend
 spec:
   managementState: managed
