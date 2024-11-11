@@ -352,7 +352,15 @@ spec:
               value: "false"
             - name: COLLECTOR_OTLP_ENABLED
               value: "true"
-          image: jaegertracing/all-in-one:1.54.0
+            - name: METRICS_STORAGE_TYPE
+              value: prometheus
+            - name: PROMETHEUS_SERVER_URL
+              value: http://prometheus:80
+            - name: COLLECTOR_OTLP_GRPC_HOST_PORT
+              value: 0.0.0.0:4317
+            - name: COLLECTOR_OTLP_HTTP_HOST_PORT
+              value: 0.0.0.0:4318
+          image: jaegertracing/all-in-one:1.63.0
           livenessProbe:
             failureThreshold: 5
             httpGet:

@@ -105,27 +105,137 @@ Erwartete Ausgabe:
 
 ## Datenerfassung in Kubernetes und OpenShift
 
+Für den nächsten Teil benötigen wir das zuvor installierte Observability Backend. Mit kubectl können wir überprüfen, ob der Cluster erreichbar ist und ob das Workshop Backend erfolgreich installiert wurde.
+Details zur Installation finden Sie im [Abschnitt Installation](00-prerequisites.md#bereitstellung-der-initialen-services).
+
 ```bash
 $ kubectl get nodes
 NAME                     STATUS   ROLES           AGE     VERSION
 workshop-control-plane   Ready    control-plane   3m23s   v1.29.1
+$ kubectl get pods -n observability-backend
+NAME                             READY   STATUS    RESTARTS      AGE
+jaeger-cb9c786c6-pf7pl           1/1     Running   1 (44m ago)   10h
+otel-collector-7d6c866bf-r64fl   1/1     Running   1 (44m ago)   10h
+prometheus-79d4df4bd9-h94dm      1/1     Running   1 (44m ago)   10h
 ```
-
 
 ### Einführung des Operators: Konfiguration und Deployment
 
+In `app/install.yaml` finden wir die Demo-Applikation, welche wir auch mit kubectl in einem Namespace unserer Wahl installieren können:
+
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/app/install.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/app/install.yaml
+$ kubectl get pods
+NAME                              READY   STATUS    RESTARTS      AGE
+postgres-74986b95d7-c7dfz         1/1     Running   2 (51m ago)   8h
+py-simple-http-767474bdb9-lsn9p   1/1     Running   1 (51m ago)   8h
+py-simple-http-767474bdb9-nnp5z   1/1     Running   1 (51m ago)   8h
+python-other-648fb7c7b5-qzjnp     1/1     Running   1 (51m ago)   8h
+python-pay-77cff996d8-74scb       1/1     Running   1 (51m ago)   8h
+replicator-7979dccfb6-86q2w       1/1     Running   1 (51m ago)   8h
 ```
 
+Wir können die vollständige Installation überprüfen, indem wir Jaeger und den Replikator lokal mit `kubectl port-foward` zugänglich machen.
 ```
 kubectl port-forward svc/replicator 8080:8080
 kubectl port-forward -n observability-backend svc/jaeger-query 16686:16686
 ```
 
-TODO: Spanmetricsconnector
-```bash
+#### Collector Konfiguration in k8s
+
+Seit der Verfügbarkeit des Collectors in v1beta1 kann die Konfiguration des Collectors in der Custom Resource wie bei anderen Objekten relativ einfach angepasst 
+
+Mit `kubectl edit` lässt sich so, z.B. der [Spanmetrics Connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/connector/spanmetricsconnector/README.md) konfigurieren.
+Dabei handelt es sich um einen OpenTelemetry Connector, der aus den übertragenen Traces Servicemetriken generiert.
+
+Ziel ist es, das Demo wie folgt anzupassen:
+
+![Span Metrics Arch](images/spanmetrics-arch.png)
+
+Konfiguration des Span Metric Connectors:
+```diff
+    processors:
+      batch: {}
+
++    connectors:
++      spanmetrics:
++        namespace: "span.metrics"
+
+    exporters:
+      otlp/traces:
+        endpoint: jaeger-collector:4317
+        tls:
+          insecure: true
+
+      otlphttp/metrics:
+        endpoint: http://prometheus:80/api/v1/otlp/
+        tls:
+          insecure: true
+
+      debug:
+        verbosity: detailed
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+-          exporters: [otlp/traces]
++          exporters: [otlp/traces, spanmetrics]
+        metrics:
++          receivers: [spanmetrics, otlp, debug]
+-          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlphttp/metrics]
+```
+
+In den Collector Logs sollten wir nun sehen, wie die Metriken aus unseren Traces generiert werden.
+```
+...
+Resource SchemaURL: 
+Resource attributes:
+     -> service.name: Str(payment)
+ScopeMetrics #0
+ScopeMetrics SchemaURL: 
+InstrumentationScope spanmetricsconnector 
+Metric #0
+Descriptor:
+     -> Name: calls
+     -> Description: 
+     -> Unit: 
+     -> DataType: Sum
+     -> IsMonotonic: true
+     -> AggregationTemporality: Cumulative
+NumberDataPoints #0
+Data point attributes:
+     -> service.name: Str(payment)
+     -> span.name: Str(do-get-handler)
+     -> span.kind: Str(SPAN_KIND_INTERNAL)
+     -> status.code: Str(STATUS_CODE_UNSET)
+StartTimestamp: 2024-11-11 21:26:42.465136337 +0000 UTC
+Timestamp: 2024-11-11 21:27:20.807831852 +0000 UTC
+Value: 6
+...
 
 ```
 
+Detailliertere Informationen sind über das Prometheus- oder das Jaeger-Dashboard abrufbar. Prometheus kann mit kubectl port-forward wie folgt verfügbar gemacht werden: `kubectl port-forward -n observability-backend 8081:80`.
+
+![Prometheus Calls](images/prom-svc-calls.png)
+
+Jaeger verwendet die gleiche Schnittstelle, um die Servicemetriken aufbereitet im [Service Performance Monitoring (SPM)](https://www.jaegertracing.io/docs/1.63/spm/) Bereich zur Verfügung zu stellen.
+
+![Span Metrics](images/otel-span-metrics.png)
+
 ### Integration mit Service- und PodMonitors
+
+Der OpenTelemetry Collector ist in der Lage, Scrape-Targets, die als Service- und Podmonitore spezifiziert wurden, aufzulösen und auf Collector-Instanzen zu verteilen. Dazu werden zunächst die entsprechenden Prometheus CRDs benötigt. Diese können wie folgt installiert werden:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/main/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
+```
+
+
+
+![Target-Allocator](images/otel-ta.png)
