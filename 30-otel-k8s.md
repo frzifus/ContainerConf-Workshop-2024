@@ -6,7 +6,7 @@
 
 > Herstellerunabhängige Möglichkeit, Telemetriedaten zu empfangen, zu verarbeiten und zu exportieren.
 
-![OpenTelemetry Collector](images/otel-collector.png)
+![OpenTelemetry Collector](images/opentelemetry-collector.png)
 
 Der OpenTelemetry Collector kann in einige Hauptkomponenten unterteilt werden.
 
@@ -16,9 +16,9 @@ Der OpenTelemetry Collector kann in einige Hauptkomponenten unterteilt werden.
 - **Extensions**: Fügen Sie zusätzliche Funktionen zu OpenTelemetry hinzu, wie z. B. die Konfiguration eines Bearer-Tokens oder das Anbieten eines Jaeger-Endpunkts für die Fernabfrage.
 - **Connectors**: Ist sowohl ein Exporteur als auch ein Empfänger. Er konsumiert Daten als Exporteur in einer Pipeline und sendet Daten als Empfänger in einer anderen Pipeline.
 
-Weitere Einzelheiten: [offiziellen Dokumentation] (https://opentelemetry.io/docs/collector/).
+Weitere Einzelheiten: [offiziellen Dokumentation](https://opentelemetry.io/docs/collector/).
 
-Die verfügbaren Komponenten werden in (Distributionen)[https://opentelemetry.io/docs/concepts/distributions/] zusammengefasst. Das OpenTelemetry Projekt stellt derzeit 3 verschiedene Distributionen zur Verfügung.
+Die verfügbaren Komponenten werden in [Distributionen](https://opentelemetry.io/docs/concepts/distributions/) zusammengefasst. Das OpenTelemetry Projekt stellt derzeit 3 verschiedene Distributionen zur Verfügung.
 
 - Core
 - Contrib
@@ -106,7 +106,9 @@ Erwartete Ausgabe:
 ## Datenerfassung in Kubernetes und OpenShift
 
 ```bash
-kubectl get ...
+$ kubectl get nodes
+NAME                     STATUS   ROLES           AGE     VERSION
+workshop-control-plane   Ready    control-plane   3m23s   v1.29.1
 ```
 
 

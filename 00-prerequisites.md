@@ -75,7 +75,7 @@ Die Installation des Observability-Backends ist optional. Ein OTLP-kompatibles B
 Falls keines vorhanden ist, können Prometheus für Metriken und Jaeger für Traces wie folgt installiert werden:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2024-opentelemetry-kubernetes-tracing-tutorial/main/backend/01-backend.yaml
+kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/backend/01-backend.yaml
 kubectl get pods -n observability-backend -w 
 ```
 
