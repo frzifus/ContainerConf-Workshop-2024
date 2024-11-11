@@ -19,8 +19,6 @@ __Recording__: TBD
 
 ## Agenda
 
-TBD
-
 Jeder Schritt des Tutorials befindet sich in einer eigenen Datei:
 
 1. [Einrichtung der Lernumgebung](00-prerequisites.md)

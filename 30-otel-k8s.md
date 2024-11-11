@@ -114,4 +114,14 @@ workshop-control-plane   Ready    control-plane   3m23s   v1.29.1
 
 ### Einführung des Operators: Konfiguration und Deployment
 
+```bash
+
+kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/app/install.yaml
+```
+
+```
+kubectl port-forward svc/replicator 8080:8080
+kubectl port-forward -n observability-backend svc/jaeger-query 16686:16686
+```
+
 ### Integration mit Service- und PodMonitors

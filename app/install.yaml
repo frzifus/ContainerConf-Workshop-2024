@@ -1,0 +1,285 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: quay.io/pilhuhn/replicator-psql
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRESQL_ADMIN_PASSWORD
+              value: "lala"
+            - name: POSTGRESQL_USER
+              value: "demo"
+            - name: POSTGRESQL_PASSWORD
+              value: "lala7"
+            - name: POSTGRESQL_DATABASE
+              value: "db=replicator"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/pgsql/data
+          livenessProbe:
+            exec:
+              command: ["pg_isready"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 7
+            failureThreshold: 5
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: py-simple-http
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: py-simple-http
+  template:
+    metadata:
+      labels:
+        app: py-simple-http
+    spec:
+      containers:
+      - name: py-simple-http
+        image: quay.io/pilhuhn/py-simple-http
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: py-simple-http-service
+spec:
+  selector:
+    app: py-simple-http
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-other
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-other
+  template:
+    metadata:
+      labels:
+        app: python-other
+    spec:
+      containers:
+        - name: python-other
+          image: quay.io/pilhuhn/py-simple-http
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-other
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: python-other
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-pay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-pay
+  template:
+    metadata:
+      labels:
+        app: python-pay
+    spec:
+      containers:
+        - name: python-pay
+          image: quay.io/pilhuhn/python-pay
+          ports:
+            - containerPort: 8787
+          env:
+            - name: pg_host
+              value: "postgres"
+            - name: otel_host
+              value: "otel-collector.observability-backend"
+            - name: other_hostport
+              value: "python-other:8000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-pay
+spec:
+  ports:
+    - port: 8787
+      targetPort: 8787
+  selector:
+    app: python-pay
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: docker.io/apache/kafka-native:3.8.1
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_NODE_ID
+              value: "1"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: 'PLAINTEXT_HOST://kafka:9092,PLAINTEXT://localhost:19092'
+            - name: KAFKA_PROCESS_ROLES
+              value: 'broker,controller'
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: '1@kafka:29093'
+            - name: KAFKA_LISTENERS
+              value: 'CONTROLLER://:29093,PLAINTEXT_HOST://:9092,PLAINTEXT://:19092'
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: 'PLAINTEXT'
+            - name: KAFKA_CONTROLLER_LISTENER_NAMES
+              value: 'CONTROLLER'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+spec:
+  ports:
+    - port: 9092
+      targetPort: 9092
+  selector:
+    app: kafka
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-relay
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-relay
+  template:
+    metadata:
+      labels:
+        app: kafka-relay
+    spec:
+      containers:
+        - name: kafka-relay
+          image: quay.io/pilhuhn/kafka-relay
+          env:
+            - name: kafka_host
+              value: "kafka"
+            - name: otel_host
+              value: "jaeger"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-relay
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: kafka-relay
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: replicator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: replicator
+  template:
+    metadata:
+      labels:
+        app: replicator
+    spec:
+      containers:
+        - name: replicator
+          image: quay.io/pilhuhn/quarkus-replicator:full-no-kafka
+          ports:
+            - containerPort: 8080
+          env:
+            - name: pg.host
+              value: "postgres"
+            - name: otel.host
+              value: "otel-collector.observability-backend"
+            - name: payment.hostport
+              value: "python-pay:8787"
+            - name: kafka.host
+              value: "kafka"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 10
+            timeoutSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: replicator
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: replicator
