@@ -326,3 +326,8 @@ kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Worksho
 ```
 
 ![otel logging lgtm](images/logs-lgtm.png)
+
+### Korrelation
+
+![Data Model 1](images/data-model-1.png)
+![Data Model 2](images/data-model-2.png)
