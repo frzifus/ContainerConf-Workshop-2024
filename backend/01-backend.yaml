@@ -342,6 +342,7 @@ spec:
       containers:
         - args:
             - --sampling.strategies-file=/etc/jaeger/sampling/sampling.json
+            - --prometheus.query.namespace=test
           env:
             - name: SPAN_STORAGE_TYPE
               value: memory

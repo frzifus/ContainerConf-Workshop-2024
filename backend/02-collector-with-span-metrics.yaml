@@ -25,7 +25,8 @@ spec:
       batch: {}
 
     connectors:
-      spanmetrics: {}
+      spanmetrics:
+        namespace: test
 
     exporters:
       otlp/traces:
