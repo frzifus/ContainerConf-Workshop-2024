@@ -318,3 +318,11 @@ Output (`kubectl logs -n observability-backend otel-ta-collector-0`):
 2024-11-11T22:28:43.903Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "debug", "resource metrics": 1, "metrics": 11, "data points": 11}
 2024-11-11T22:29:13.908Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "debug", "resource metrics": 1, "metrics": 15, "data points": 15}
 ```
+
+### Logging
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/frzifus/ContainerConf-Workshop-2024/main/backend/04-collector-logging.yaml
+```
+
+![otel logging lgtm](images/logs-lgtm.png)
